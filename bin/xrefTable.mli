@@ -14,5 +14,3 @@ val add_reference: t -> string -> int -> int -> string -> string -> Glob_kind.t 
 val add_definition: t -> string -> int -> int -> string -> Glob_kind.t -> t
 
 val fold : ((string * int) -> (Range.t * xref) -> 'b -> 'b) -> t -> 'b -> 'b
-
-val dump : t -> string
