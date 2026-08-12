@@ -60,3 +60,11 @@ let add_definition xref_table curmod pos_from pos_to path ty =
 
 let fold f xref_table init =
   Map.fold f xref_table init
+
+let dump t =
+  let lines =
+    Map.to_list t
+    |> List.map (fun ((m, pos), (_range, xref)) ->
+           !%"%s:%d: %s" m pos (sxref xref))
+  in
+  String.concat "\n" (["====DUMP===="] @ lines @ ["============"])
