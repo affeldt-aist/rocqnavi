@@ -695,10 +695,13 @@ let process_v_file ?repo_root proj_name env all_files f =
     make_redirect (Filename.concat !output_dir (base_f ^ ".html"))
                   (module_name ^ ".html")
 
+let globs = ref []
+
 let process_glob_file f =
   let ic = open_in f in
   let glob = Glob_parser.parse_channel ic in
   close_in ic;
+  globs := glob :: !globs;
   add_module glob.file_module;
   List.iter (function
     | Glob.Definition { pos_from; pos_to; section_path; id; kind } ->
@@ -812,6 +815,7 @@ let main () =
   env := {!env with
            repository_root_url = repo_root;
            directory_mappings = !directory_mappings;
+           usedby_table = UsedByTable.create_inv_map_from_globs !globs;
          };
   if !show_type_information_using_coqtop_process
      || !show_type_information_using_rocq_lsp_process then

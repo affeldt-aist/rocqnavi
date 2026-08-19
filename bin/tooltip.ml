@@ -25,7 +25,7 @@ let make env current_module loc id kind =
     | None -> false
     | Some list -> Index_blacklist.is_listed list id
   in
-  let tooltip_content =
+  let tooltip_content = (* type information *)
     match env.type_lookup, kind with
     | Some conn, Glob_kind.Definition when is_black = false ->
        begin match lookup_type_info conn id loc with
@@ -37,6 +37,17 @@ let make env current_module loc id kind =
     | _ -> None
   in
   let tooltip_content =
+    let defs = UsedByTable.find env.usedby_table (current_module, id) in
+    Option.value ~default:[] defs
+    |> List.map (fun (dmod, dpath) ->
+        let href = !%"%s.html#%s" dmod (Generate_index.sanitize_linkname dpath) in
+        !%{|<a href="%s">%s</a> (in %s)|} href dpath dmod)
+    |> String.concat "\n"
+    |> (^) "<hr/>"
+    |> (^) (Option.value ~default:"" tooltip_content)
+    |> Option.some
+  in
+  let tooltip_content = (* URL on the repository *)
     match env.repository_root_url with
     | Some repo_root ->
        let line = loc.Lexing.pos_lnum in
@@ -52,4 +63,3 @@ let make env current_module loc id kind =
     | None -> tooltip_content
   in
   tooltip_content
-
