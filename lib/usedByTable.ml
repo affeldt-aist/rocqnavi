@@ -90,3 +90,29 @@ let create_inv_map_from_globs globs =
 
 let find map ref =
   Map.find_opt ref map
+
+(* Module-level aggregates built on top of the per-identifier table above.
+   These reflect actual reference usage from .glob data, not Require
+   statements: a required-but-unused module will not appear here. *)
+
+(* Modules that reference some identifier defined in [module_name]
+   (displayed as "Used by"). *)
+let referencing_modules table module_name =
+  Map.fold (fun (ref_mod, _ref_id) defs acc ->
+      if ref_mod = module_name then
+        List.map fst defs @ acc
+      else acc)
+    table []
+  |> list_uniq
+  |> List.filter (fun m -> m <> module_name)
+
+(* Modules defining an identifier referenced from some definition of
+   [module_name] (displayed as "Uses"). *)
+let referenced_modules table module_name =
+  Map.fold (fun (ref_mod, _ref_id) defs acc ->
+      if List.exists (fun (def_mod, _) -> def_mod = module_name) defs then
+        ref_mod :: acc
+      else acc)
+    table []
+  |> list_uniq
+  |> List.filter (fun m -> m <> module_name)
