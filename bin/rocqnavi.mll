@@ -47,7 +47,7 @@ let end_current_command env s =
   in
   begin match env.type_lookup with
   | Some conn ->
-     let cmd = !current_command in
+     let cmd = String.trim !current_command in
      if is_loading_command cmd then Type_lookup.load cmd conn
   | _ -> ()
   end;
