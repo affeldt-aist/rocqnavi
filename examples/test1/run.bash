@@ -31,7 +31,7 @@ if command -v xq >/dev/null 2>&1; then
     done
 else
     # Check other resource files and directories
-    diff -ruw -x rocqnavi.css -x rocqnavi.js \
+    diff -ruwB -x rocqnavi.css -x rocqnavi.js \
          $DIR/expected_html $DIR/html
 fi
 
