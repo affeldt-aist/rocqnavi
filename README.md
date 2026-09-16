@@ -240,7 +240,7 @@ See [foo](#foo) for more details.
 *)
 ```
 
-To link to a definition in another file, prefix the anchor with the target file's name, e.g. `[foo](mod.Other.html#foo)`.
+To link to a definition in another file, prefix the anchor with the target file's name, e.g., `[foo](mod.Other.html#foo)`.
 
 #### Other resources
 
