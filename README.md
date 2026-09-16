@@ -232,7 +232,7 @@ The [markdown-it-deflist](https://github.com/markdown-it/markdown-it-deflist) ex
 
 #### Links to definitions
 
-Every top-level definition (`Definition`, `Lemma`, `Inductive`, etc) gets an HTML anchor named after it, so it can be linked to with `#<name>`. For example, to link to a definition named `foo` in the current file:
+Every top-level definition (`Definition`, `Lemma`, `Inductive`, etc.) gets an HTML anchor named after it, so it can be linked to with `#<name>`. For example, to link to a definition named `foo` in the current file:
 
 ```rocq
 (**md
