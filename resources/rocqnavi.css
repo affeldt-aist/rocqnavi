@@ -122,7 +122,7 @@ span.bracket {
   border: solid 1px #cd0000;
 }
 
-span.quoted {
+div.quoted {
     color: #8B2252; //VioletRed4 (same as proofgeneral)
 }
 
