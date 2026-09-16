@@ -29,11 +29,16 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Install Xq for testings
+      - name: Install Xq for testings on Ubuntu
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install xq
+
+      - name: Install Xq for testings on Macos
+        if: runner.os == 'macos'
+        run: |
+          brew install xq
 
       - name: Checkout tree
         uses: actions/checkout@v4
