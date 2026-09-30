@@ -20,3 +20,8 @@ End HB.
 From HB Require Import structures.
 
 Locate "_ + _".
+
+Inductive light : Set :=
+| Red     (**r Aka *)
+| Yellow  (**r Ki  *)
+| Blue.   (**r Ao  *)

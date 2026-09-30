@@ -507,6 +507,10 @@ and coq = parse
        idents !env (Lexing.lexeme_start lexbuf) id  (Lexing.lexeme_start_p lexbuf); coq lexbuf}
 (*  | non_whites as id
       {idents (Lexing.lexeme_start lexbuf) id; coq lexbuf}*)
+  | space+ as s
+      {
+        space s; coq lexbuf
+      }
   | _ as c
       {
         proceed_current_command (Lexing.lexeme lexbuf);

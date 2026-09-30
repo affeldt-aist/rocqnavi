@@ -24,7 +24,7 @@ if command -v xq >/dev/null 2>&1; then
         act_html=$DIR/html/$base
         echo "checking $base..."
         if type xq > /dev/null 2>&1; then
-            diff -u <(xq $exp_html) <(xq $act_html)
+            diff -uw <(xq $exp_html) <(xq $act_html)
         else
             diff -uw $exp_html $act_html
         fi
