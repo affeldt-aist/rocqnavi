@@ -60,7 +60,7 @@ div.sidebar ul {
 
 div.content {
   padding-left:0.5em;
-  max-width: 80ch;
+  max-width: 100%;
 }
 
 div.coq code {
