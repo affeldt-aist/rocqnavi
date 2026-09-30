@@ -51,4 +51,5 @@ $DIR/rocqnavi -title "MathComp-Analysis-$REVISION" -d $OUTDIR \
   -index-blacklist $INDEX_BLACKLIST_FILE \
   -show-type-information-using-coqtop-process \
   -doc-source-url "https://github.com/math-comp/analysis/tree/859965addfaf30afc56c2f1d291db2a0df940d95/" \
+  -file-references-on-right-pane \
   $FILES

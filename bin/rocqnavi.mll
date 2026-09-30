@@ -47,7 +47,7 @@ let end_current_command env s =
   in
   begin match env.type_lookup with
   | Some conn ->
-     let cmd = !current_command in
+     let cmd = String.trim !current_command in
      if is_loading_command cmd then Type_lookup.load cmd conn
   | _ -> ()
   end;
@@ -660,6 +660,7 @@ let index_blacklist_file = ref ""
 let show_type_information_using_coqtop_process = ref false
 let show_type_information_using_rocq_lsp_process = ref false
 let doc_source_url = ref ""
+let file_references_on_right_pane = ref false
 
 let file_graph dot_file depend_file =
   match dot_file, depend_file with
@@ -687,7 +688,8 @@ let process_v_file ?repo_root proj_name env all_files f =
   let lexbuf = Lexing.from_channel ~with_positions:true ic in
   Lexing.set_filename lexbuf filepath;
   coq_bol lexbuf;
-  Generate_index.end_html_page ?repo_file !oc;
+  Generate_index.end_html_page !oc ?repo_file
+    env.usedby_table module_name;
   close_out !oc; oc := stdout;
   close_in ic;
   Option.iter (Type_lookup.close_file filepath module_name) env.type_lookup;
@@ -695,10 +697,13 @@ let process_v_file ?repo_root proj_name env all_files f =
     make_redirect (Filename.concat !output_dir (base_f ^ ".html"))
                   (module_name ^ ".html")
 
+let globs = ref []
+
 let process_glob_file f =
   let ic = open_in f in
   let glob = Glob_parser.parse_channel ic in
   close_in ic;
+  globs := glob :: !globs;
   add_module glob.file_module;
   List.iter (function
     | Glob.Definition { pos_from; pos_to; section_path; id; kind } ->
@@ -775,6 +780,8 @@ let main () =
       "   Show type information of definitions as a tooltip";
     "-doc-source-url", Arg.Set_string doc_source_url,
       "   The Link to the source repository";
+    "-file-references-on-right-pane", Arg.Set file_references_on_right_pane,
+      "   The right pane show a list of the files that use this file and the files that this file references.";
   ])
   process_file
   "Usage: rocqnavi [options] file.glob ... file.v ...\nOptions are:";
@@ -812,6 +819,9 @@ let main () =
   env := {!env with
            repository_root_url = repo_root;
            directory_mappings = !directory_mappings;
+           usedby_table = if !file_references_on_right_pane then
+                            Some (UsedByTable.create_inv_map_from_globs !globs)
+                          else None;
          };
   if !show_type_information_using_coqtop_process
      || !show_type_information_using_rocq_lsp_process then
