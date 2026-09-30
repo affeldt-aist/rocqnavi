@@ -63,9 +63,9 @@ div.content {
   max-width: 100%;
 }
 
-div.coq code {
+div.coq {
   padding: 0.0em;
-  font-family: "Fira Code", monospace;
+  font-family: "Source Code Pro", monospace;
   font-variant-ligatures: none;
 }
 div.coq li {
