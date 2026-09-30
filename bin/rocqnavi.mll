@@ -268,7 +268,7 @@ let is_vernacular id =
 
 let is_hb_prefix id = (id = "HB")
 
-let ident_partial env pos id loc =
+let ident_partial ?classes env pos id loc =
   let name pos' id =
     if pos' - pos > String.length id then id
     else String.sub id 0 (pos' - pos)
@@ -276,10 +276,11 @@ let ident_partial env pos id loc =
   if id = "_" then (pos + 1, "_") else
     let max_pos = pos + String.length id in
     let classes =
-      if is_gallina_keyword (String.trim id) then "gallina-kwd"
-      else if is_vernacular (String.trim id) then "vernacular"
-      else if is_hb_prefix id then "hierarchy-builder"
-      else "id"
+      (Option.value ~default:[] classes @ if is_gallina_keyword (String.trim id) then ["gallina-kwd"]
+                 else if is_vernacular (String.trim id) then ["vernacular"]
+                 else if is_hb_prefix id then ["hierarchy-builder"]
+                 else ["id"])
+      |> String.concat " "
     in
     begin match crossref !current_module pos max_pos with
     | Nolink None ->
@@ -296,11 +297,11 @@ let ident_partial env pos id loc =
     end
 
 
-let idents env pos id loc =
+let idents ?classes env pos id loc =
 (*  eprintf "idents: %d '%s'\n" pos id;*)
   let rec iter pos id =
     if id = "" then () else begin
-      let (pos', tags) = ident_partial env pos id loc in
+      let (pos', tags) = ident_partial ?classes env pos id loc in
       fprintf !oc "%s" tags;
       let rpos' = pos' - pos in
       if pos' <= pos then begin
@@ -313,10 +314,6 @@ let idents env pos id loc =
     end
   in
   iter pos id
-
-let quoted q =
-  !%{|<span class="quoted">%s</span>|} q
-  |> fprintf !oc "%s"
 
 let space s =
   for _ = 1 to String.length s do fprintf !oc "&nbsp;" done
@@ -492,8 +489,7 @@ and coq = parse
   | quoted as q
       {
         proceed_current_command (Lexing.lexeme lexbuf);
-        quoted q; coq lexbuf
-(*        idents !env (Lexing.lexeme_start lexbuf) q (Lexing.lexeme_start_p lexbuf); coq lexbuf*)
+        idents ~classes:["quoted"] !env (Lexing.lexeme_start lexbuf) q (Lexing.lexeme_start_p lexbuf); coq lexbuf
       }
   | (' '? non_whites+ as id)
       {(*output_char !oc ' ';*)
