@@ -21,7 +21,7 @@ val start_html_page : out_channel -> string -> string
                       -> string -> file_path list -> unit
 
 val end_html_page : out_channel -> ?repo_file: string
-                    -> UsedByTable.t -> string -> unit
+                    -> UsedByTable.t option -> string -> unit
 val end_index_page : out_channel -> ?repo_file: string -> unit -> unit
 
 val generate : ?repo_root:string -> string -> XrefTable.t

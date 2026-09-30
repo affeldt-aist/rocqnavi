@@ -14,6 +14,7 @@ rocq compile $VFiles
 
 GlobFiles="Main.glob"
 $RocqNavi -title "test1" -d ./html $VFiles $GlobFiles \
+  -file-references-on-right-pane \
   -doc-source-url "https://example.com/unexisting/tree/xxxxxxxxxxxxx/"
 
 # Check html files

@@ -14,6 +14,7 @@ rocq compile $VFiles
 
 GlobFiles="*.glob"
 $RocqNavi -title "test-hb" -d ./html $VFiles $GlobFiles \
+  -file-references-on-right-pane \
   -doc-source-url "https://github.com/rocq-prover/platform-docs/blob/f9862b19e7d03f6b93194128cfce9a361eefbcfe/src/hierarchy_builder/"
 
 # Check html files

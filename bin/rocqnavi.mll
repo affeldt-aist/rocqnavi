@@ -660,6 +660,7 @@ let index_blacklist_file = ref ""
 let show_type_information_using_coqtop_process = ref false
 let show_type_information_using_rocq_lsp_process = ref false
 let doc_source_url = ref ""
+let file_references_on_right_pane = ref false
 
 let file_graph dot_file depend_file =
   match dot_file, depend_file with
@@ -779,6 +780,8 @@ let main () =
       "   Show type information of definitions as a tooltip";
     "-doc-source-url", Arg.Set_string doc_source_url,
       "   The Link to the source repository";
+    "-file-references-on-right-pane", Arg.Set file_references_on_right_pane,
+      "   The right pane show a list of the files that use this file and the files that this file references.";
   ])
   process_file
   "Usage: rocqnavi [options] file.glob ... file.v ...\nOptions are:";
@@ -816,7 +819,9 @@ let main () =
   env := {!env with
            repository_root_url = repo_root;
            directory_mappings = !directory_mappings;
-           usedby_table = UsedByTable.create_inv_map_from_globs !globs;
+           usedby_table = if !file_references_on_right_pane then
+                            Some (UsedByTable.create_inv_map_from_globs !globs)
+                          else None;
          };
   if !show_type_information_using_coqtop_process
      || !show_type_information_using_rocq_lsp_process then

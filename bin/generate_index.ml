@@ -101,7 +101,7 @@ let module_list_items modules =
   |> List.map (fun m -> !%{|<li><a href="%s.html">%s</a></li>|} m m)
   |> String.concat "\n"
 
-let uses_panel usedby_table module_name =
+let uses_panel module_name usedby_table =
   let uses_modules =
     UsedByTable.referenced_modules usedby_table module_name |> module_list_items in
   let used_modules =
@@ -134,13 +134,15 @@ let end_page_footer ?repo_file uses_panel_html ch =
    [module_name] are mandatory, and are used to fill in the "Uses" /
    "Used by" panel with the modules it actually references. *)
 let end_html_page ch ?repo_file usedby_table module_name =
-  end_page_footer ?repo_file (uses_panel usedby_table module_name) ch
+  let uses = Option.value ~default:"" @@ Option.map (uses_panel module_name) usedby_table in
+  end_page_footer ?repo_file uses ch
 
 (* For a generated listing page (index.html, notation index, per-letter
    indexes) that is not about any single module: there is no "Uses" /
    "Used by" panel to show at all, so it is omitted entirely. *)
 let end_index_page ch ?repo_file () =
-  end_page_footer ?repo_file "" ch
+  let uses_panel = "" in
+  end_page_footer ?repo_file uses_panel ch
 
 let write_html_file ?repo_root all_files txt filename title project_name =
   let oc = open_out filename in

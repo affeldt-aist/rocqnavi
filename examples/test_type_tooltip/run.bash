@@ -14,6 +14,7 @@ rocq compile $VFiles
 
 GlobFiles="Main.glob"
 $RocqNavi -title "test_type_tooltip" -d ./html $VFiles $GlobFiles \
+    -file-references-on-right-pane \
     -show-type-information-using-rocq-lsp
 
 # Check html files

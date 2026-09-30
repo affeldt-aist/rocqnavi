@@ -37,7 +37,9 @@ let make env current_module loc id kind =
     | _ -> None
   in
   let used_by =
-    let defs = UsedByTable.find env.usedby_table (current_module, id) in
+    let defs = Option.bind env.usedby_table
+                 (fun tbl -> UsedByTable.find tbl (current_module, id))
+    in
     Option.value ~default:[] defs
     |> List.map (fun (dmod, _dpath) -> dmod)
     |> list_uniq
