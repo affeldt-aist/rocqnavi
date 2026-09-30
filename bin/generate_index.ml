@@ -187,7 +187,6 @@ let generate_with_capital ?repo_root output_dir proj_name table all_files kind (
 
 let overwrite_dot_file_with_url xref_table dot_file = (* dirty *)
   let dot_content = String.concat "\n" (Common.read_lines dot_file) in
-  let is_exists_in_dot_file name = Common.grep name dot_content in
   let all_hb_defs =
     XrefTable.fold (fun (mod_,_) (_, xref) store ->
         match xref with
@@ -205,7 +204,6 @@ let overwrite_dot_file_with_url xref_table dot_file = (* dirty *)
     all_hb_defs
     |> List.map (fun (mod_, path) ->
         (mod_, String.sub path 0 (String.length path - String.length ".pack_")))
-    |> List.filter (fun (_, name) -> is_exists_in_dot_file name)
   in
   let node_with_node (mod_, name) =
     let url = mod_ ^ ".html#" ^ name in
