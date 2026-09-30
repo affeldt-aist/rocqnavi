@@ -98,10 +98,8 @@ div.footer {
 }
 
 span.docright {
-  position: absolute;
-  left: 60%;
-  width: 40%;
   font-family: serif;
+  background-color: #f2f1f1;
 }
 
 span.bracket {
