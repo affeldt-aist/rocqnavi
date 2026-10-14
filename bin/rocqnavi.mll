@@ -19,6 +19,10 @@ open Generate_index
 open Env
 module K = Glob_kind
 
+let structure_graph_style_default =
+  (* https://github.com/affeldt-aist/rocqnavi/issues/154 *)
+  {|-Granksep=.4 -Gnodesep=.05 -Gmargin=0 -Gratio="compress" -Nshape=box -Nstyle="rounded,filled" -Nfillcolor="lightgray" -Npenwidth=0 -Nmargin=.04 -Nwidth=0 -Nheight=0|}
+
 let warn lexbuf message =
   let open Lexing in
   let position = lexbuf.lex_curr_p in
@@ -653,7 +657,8 @@ let logical_name_base = ref ""
 let generate_css = ref true
 let use_short_names = ref false
 let generate_redirects = ref false
-let hierarchy_graph_dot_file = ref ""
+let structure_graph_dot_file = ref ""
+let structure_graph_style = ref structure_graph_style_default
 let file_graph_dot_file = ref ""
 let file_graph_depend_file = ref ""
 let index_blacklist_file = ref ""
@@ -762,9 +767,11 @@ let main () =
       "   Generate redirection files modname.html -> coqdir.modname.html";
     "-short-names", Arg.Set use_short_names,
       "   Use short, unqualified module names in the output";
-    "-structure-graph", Arg.Set_string hierarchy_graph_dot_file,
+    "-structure-graph", Arg.Set_string structure_graph_dot_file,
       "   Show the hierarchy graph of <dot-file> on the index.html";
-    "-hierarchy-graph", arg_deprecated_set_string "Use `-structure-graph`" hierarchy_graph_dot_file,
+    "-structure-graph-style", Arg.Set_string structure_graph_style,
+      "<dot-attrs>   Extra Graphviz -G/-N/-E attributes for the hierarchy graph";
+    "-hierarchy-graph", arg_deprecated_set_string "Use `-structure-graph`" structure_graph_dot_file,
       "";
     "-file-graph", Arg.Set_string file_graph_dot_file,
       "   Show the dependency graph of <dot-file> on the index.html";
@@ -790,9 +797,9 @@ let main () =
   if (try not (Sys.is_directory !output_dir) with Sys_error _ -> true) then
     raise (Usage_error (!%"Error: output directory %s does not exist or is not a directory.\n"
              !output_dir));
-  if "" <> !hierarchy_graph_dot_file && not (Sys.file_exists !hierarchy_graph_dot_file) then
+  if "" <> !structure_graph_dot_file && not (Sys.file_exists !structure_graph_dot_file) then
     raise (Usage_error (!%"Error: The dot file does not exists: '%s'\n"
-                         !hierarchy_graph_dot_file));
+                         !structure_graph_dot_file));
   if "" <> !index_blacklist_file && not (Sys.file_exists !index_blacklist_file) then
     raise (Usage_error (!%"Error: The file '%s' does not exists, which file was specified by the -index-blacklist option.\n" !index_blacklist_file));
   List.iter process_glob_file (List.rev !glob_files);
@@ -814,8 +821,9 @@ let main () =
   Log.debug (!%"directory_mapping: [%s]" (Directory_mappings.show !directory_mappings));
   Generate_index.generate ?repo_root !output_dir
     !xref_table xref_modules
-    !title !directory_mappings !hierarchy_graph_dot_file file_graph_input
-    index_blacklist_opt;
+    !title !directory_mappings
+    !structure_graph_dot_file ~hb_graph_style:!structure_graph_style
+    file_graph_input index_blacklist_opt;
   env := {!env with
            repository_root_url = repo_root;
            directory_mappings = !directory_mappings;
