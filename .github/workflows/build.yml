@@ -50,6 +50,10 @@ jobs:
           opam-repositories: |
             rocq-released: https://rocq-prover.org/opam/released
             default: https://github.com/ocaml/opam-repository.git
+          # `act`'s local Docker images lack `bwrap`, which opam's sandboxing
+          # requires on Linux. Only disable sandboxing when running under
+          # `act` (env.ACT); real GitHub-hosted runners keep it enabled.
+          opam-disable-sandboxing: ${{ env.ACT == 'true' }}
 
       - name: Set-up Rocq for testing
         run: |

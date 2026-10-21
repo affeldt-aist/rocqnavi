@@ -17,6 +17,9 @@ $RocqNavi -title "test_type_tooltip" -d ./html $VFiles $GlobFiles \
     -file-references-on-right-pane \
     -show-type-information-using-rocq-lsp
 
+# Validate the generated html files
+npx --yes html-validate@11.17.0 $DIR/html/*.html
+
 # Check html files
 # xq decodes "&nbsp;" entities into the raw NBSP byte sequence (0xc2 0xa0).
 # Whether `diff -w` treats that byte sequence as equivalent to a plain space
