@@ -257,10 +257,10 @@ let nested_ids_anchor env classes ids text loc =
   let closes = List.map (fun _ -> "</span>") ids |> String.concat "" in
   match Tooltip.make env !current_module loc id0 kind0 with
   | Some tooltip ->
-    let divtag = Tooltip.tag_with_tooltip "div" id0 classes tooltip text in
+    let divtag = Tooltip.tag_with_tooltip "span" id0 classes tooltip text in
      !%{|%s%s%s|} opens divtag closes
   | None ->
-    !%{|%s<a name="%s" class="%s">%s</a>%s|} opens id0 classes
+    !%{|%s<span class="%s">%s</span>%s|} opens classes
       (html_escaped text) closes
 
 let is_gallina_keyword id =
@@ -293,8 +293,11 @@ let ident_partial ?classes env pos id loc =
        pos', !%"<span class=\"%s\">%s</span>" classes
                (html_escaped (name pos' id))
     | Link (pos', p) ->
-       pos', !%"<span class=\"%s link\"><a href=\"%s\">%s</a></span>" classes
-               p (html_escaped (name pos' id))
+       let text = html_escaped (name pos' id) in
+       if String.trim text = "" then
+         pos', !%"<span class=\"%s\">%s</span>" classes text
+       else
+         pos', !%"<span class=\"%s link\"><a href=\"%s\">%s</a></span>" classes p text
     | Anchors (pos', ps) ->
        let classes = classes ^ " anchor" in
        (pos', nested_ids_anchor env classes ps (name pos' id) loc)
@@ -323,14 +326,14 @@ let space s =
   for _ = 1 to String.length s do fprintf !oc "&nbsp;" done
 
 let newline () =
-  fprintf !oc "<br/>\n"
+  fprintf !oc "<br>\n"
 
 let dashes = function
   | "-" -> set_enum_depth 1
   | "--" -> set_enum_depth 2
   | "---" -> set_enum_depth 3
   | "----" -> set_enum_depth 4
-  | _ -> fprintf !oc "<hr/>\n"
+  | _ -> fprintf !oc "<hr>\n"
 
 let start_verbatim () =
   fprintf !oc "<pre>\n"

@@ -66,30 +66,26 @@ let left_sidebar_files all_files =
   let rec tag_of_file_path parents = function
     | File name ->
        let link = (String.concat "." (List.rev (name :: parents))) ^ ".html" in
-       !%{|<li><a href="%s">%s</a></li>|} link name
+       Html.(a ~href:link [text name])
     | Dir (name, fs) ->
        let current_path = List.rev (name :: parents) |> String.concat "." in
        let children =
          sort_for_directories fs
          |> List.map (tag_of_file_path (name :: parents))
        in
-       !%{|<li><details id="%s"><summary>%s</summary>
-          <ul>
-          %s
-          </ul>
-          </details>
-          </li>|} current_path name (String.concat "\n" children)
+       Html.details ~id:current_path ~summary:[Html.text name] children
   in
   sort_for_directories all_files
   |> List.map (tag_of_file_path [])
-  |> String.concat "\n"
+  |> Html.ul
 
 let start_html_page ch title h1 project_name all_files =
   let open Str in
   global_replace (regexp_string "$NAME") title Resources.header
   |> global_replace (regexp_string "$H1") h1
   |> global_replace (regexp_string "$PROJECT") project_name
-  |> global_replace (regexp_string "$FILES") (left_sidebar_files all_files)
+  |> global_replace (regexp_string "$FILES")
+       (Html.to_string @@ left_sidebar_files all_files)
   |> output_string ch
 
 let compare_case_insensitive s1 s2 =
@@ -108,16 +104,12 @@ let uses_panel module_name usedby_table =
     UsedByTable.referencing_modules usedby_table module_name |> module_list_items in
   !%{|<details id="uses-right-pane">
         <summary>Uses</summary>
-        <ul>
-          %s
-        </ul>
+        <ul>%s</ul>
       </details>
 
       <details id="usedby-right-pane">
         <summary>Used By</summary>
-        <ul>
-          %s
-        </ul>
+        <ul>%s</ul>
       </details>|} uses_modules used_modules
 
 let end_page_footer ?repo_file uses_panel_html ch =

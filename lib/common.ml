@@ -121,6 +121,11 @@ let list_max_by measure xs =
      |> snd
      |> Option.some
 
+let list_intersperse xs ~sep =
+  match xs with
+  | [] -> []
+  | x :: xs -> x :: List.concat_map (fun x -> [sep; x]) xs
+
 let html_escaped =
   let buff = Buffer.create 5 in
   fun s ->
