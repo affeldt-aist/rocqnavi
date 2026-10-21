@@ -259,11 +259,11 @@ let overwrite_dot_file_with_url xref_table dot_file = (* dirty *)
   in
   Common.write_lines dot_file lines
 
-let generate_hierarchy_graph title xref_table output_dir dot_file =
+let generate_hierarchy_graph title xref_table output_dir ?style dot_file =
   overwrite_dot_file_with_url xref_table dot_file;
   let svg_path = Filename.concat output_dir "hierarchy_graph.svg" in
   let dot = Graphviz.from_file dot_file in
-  Graphviz.generate_svg svg_path dot;
+  Graphviz.generate_svg ?style svg_path dot;
   !%"<h2>Mathematical Structures (%s only)</h2>\n" title
   ^ Zoomable_svgtag.div "hierarchy_graph" svg_path
 
@@ -277,11 +277,13 @@ let generate_dependency_graph_from_dot output_dir dot =
  * generate index.html
  *)
 let generate_topfile ?repo_root output_dir all_files xrefs title xref_table
-      directory_mapping hierarchy_graph_dot_file file_graph_input =
+      directory_mapping hb_graph_dot_file ?hb_graph_style
+      file_graph_input =
 
   let hierarchy_graph =
-    if hierarchy_graph_dot_file = "" then "" else
-      generate_hierarchy_graph title xref_table output_dir hierarchy_graph_dot_file
+    if hb_graph_dot_file = "" then "" else
+      generate_hierarchy_graph title xref_table output_dir
+        ?style:hb_graph_style hb_graph_dot_file
   in
   let file_graph_dot =
     file_graph_input
@@ -341,7 +343,7 @@ let item_of kind module_ path =
   {kind; name=path; linkname; module_}
 
 let generate ?repo_root output_dir (xref_table:XrefTable.t) xref_modules
-      title directory_mapping file_graph_input dependency_dot_file index_blacklist =
+      title directory_mapping hb_graph_input ?hb_graph_style dependency_dot_file index_blacklist =
   let is_blacklisted =
     match index_blacklist with
     | None -> fun name -> false
@@ -393,4 +395,4 @@ let generate ?repo_root output_dir (xref_table:XrefTable.t) xref_modules
     kinds;
   generate_notation_list ?repo_root output_dir title table all_files notation_items;
   generate_topfile ?repo_root output_dir all_files indexed_items title xref_table
-    directory_mapping file_graph_input dependency_dot_file
+    directory_mapping hb_graph_input ?hb_graph_style dependency_dot_file

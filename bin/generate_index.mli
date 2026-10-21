@@ -27,4 +27,6 @@ val end_index_page : out_channel -> ?repo_file: string -> unit -> unit
 val generate : ?repo_root:string -> string -> XrefTable.t
                -> (string, unit) Hashtbl.t -> string
                -> Directory_mappings.t
-               -> string -> File_graph.input option -> Index_blacklist.t option -> unit
+               -> string -> ?hb_graph_style:string -> File_graph.input option
+               -> Index_blacklist.t option -> unit
+
