@@ -1,0 +1,7 @@
+{
+  "extends": ["html-validate:recommended"],
+  "rules": {
+    "valid-id": "off",
+    "no-dup-id": "off"
+  }
+}

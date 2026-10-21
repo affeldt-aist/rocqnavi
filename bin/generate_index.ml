@@ -85,7 +85,7 @@ let start_html_page ?custom_css_file ch title h1 project_name all_files =
     match custom_css_file with
     | None -> ""
     | Some filename ->
-       !%{|<link href="%s" rel="stylesheet" type="text/css" />|} filename
+       !%{|<link href="%s" rel="stylesheet" type="text/css">|} filename
   in
   global_replace (regexp_string "$NAME") title Resources.header
   |> global_replace (regexp_string "$H1") h1
