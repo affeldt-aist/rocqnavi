@@ -17,6 +17,7 @@ val list_uniq : 'a list -> 'a list
 val list_take : int -> 'a list -> 'a list
 val list_drop : int -> 'a list -> 'a list
 val list_max_by : ('a -> 'b) -> 'a list -> 'a option
+val list_intersperse : 'a list -> sep:'a -> 'a list
 
 val html_escaped : string -> string
 
