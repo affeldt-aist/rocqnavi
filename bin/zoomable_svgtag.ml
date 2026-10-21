@@ -20,7 +20,14 @@ let is_small svgstring =
   | _ -> false
 
 let read_svg svg_path =
-  file_using_r svg_path (fun ch -> really_input_string ch (in_channel_length ch))
+  let content =
+    file_using_r svg_path (fun ch -> really_input_string ch (in_channel_length ch))
+  in
+  (* Strip the XML prolog and DOCTYPE that `dot -Tsvg` emits: they are only
+     valid at the start of a standalone document and break the HTML parser
+     when the <svg> element is inlined into an HTML page. *)
+  let svg_start = Str.search_forward (Str.regexp_string "<svg") content 0 in
+  String.sub content svg_start (String.length content - svg_start)
 
 let div id svg_path =
   let svgstring = read_svg svg_path in
