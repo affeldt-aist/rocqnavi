@@ -16,7 +16,6 @@ val sanitize_linkname : string -> string
 
 type file_path
 val all_files : (string, unit) Hashtbl.t -> file_path list
-val left_sidebar_files : file_path list -> string
 val start_html_page : out_channel -> string -> string
                       -> string -> file_path list -> unit
 

@@ -3,11 +3,22 @@ open Env
 
 type t = string
 
-let span_of_tooltip content =
-  !%"<span class='tooltip-area'>%s</span>" content
+(* The tooltip is positioned relative to the single word that triggers it
+   (see .tooltip/.tooltip-area in resources/rocqnavi.css), so its positioned
+   ancestor must be inline to flow within the running source text. HTML has
+   no inline element whose content model permits block children (<ul>, <hr>,
+   <p>), so this CSS-only per-word tooltip inherently nests flow content
+   inside a <span>. Suppress just this known, accepted violation. *)
+let span_of_tooltip_area content =
+  let disable_comment =
+    if grep "<ul" content || grep "<hr" content || grep "<p>" content then
+      {|<!-- html-validate-disable-block element-permitted-content -->|}
+    else ""
+  in
+  !%{|<span class="tooltip-area">%s%s</span>|} disable_comment content
 
 let tag_with_tooltip tagname name classes tooltip_content display_text =
-  let tooltip = span_of_tooltip tooltip_content in
+  let tooltip = span_of_tooltip_area tooltip_content in
   !%{|<%s name="%s" class="%s tooltip">%s%s</%s>|} tagname name classes
     (html_escaped display_text) tooltip tagname
 
@@ -31,8 +42,8 @@ let make env current_module loc id kind =
        begin match lookup_type_info conn id loc with
        | None -> ""
        | Some (Type_lookup.Markdown md) ->
-          !%"<span class='markdown'>%s</span>" md
-       | Some (PlainText txt) -> !%"<p>%s</p>" txt
+          !%{|<span class="markdown">%s</span>|} (html_escaped md)
+       | Some (PlainText txt) -> !%"<p>%s</p>" (html_escaped txt)
        end |> Option.some
     | _ -> None
   in
@@ -59,11 +70,11 @@ let make env current_module loc id kind =
          |> String.concat "/"
        in
        let url = !%"%s/%s.v#L%d"repo_root filepath line in
-       Some (!%"<a href='%s' target='_blank'>Source code</a>" url)
+       Some (!%{|<a href="%s" target="_blank">Source code</a>|} url)
     | None -> None
   in
   [type_information; used_by; source_url]
   |> List.filter_map Fun.id
   |> function
     | [] -> None
-    | contents -> Some (String.concat "<hr/>" contents)
+    | contents -> Some (String.concat "<hr>" contents)
