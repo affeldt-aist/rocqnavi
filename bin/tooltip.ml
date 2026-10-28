@@ -3,8 +3,19 @@ open Env
 
 type t = string
 
+(* The tooltip is positioned relative to the single word that triggers it
+   (see .tooltip/.tooltip-area in resources/rocqnavi.css), so its positioned
+   ancestor must be inline to flow within the running source text. HTML has
+   no inline element whose content model permits block children (<ul>, <hr>,
+   <p>), so this CSS-only per-word tooltip inherently nests flow content
+   inside a <span>. Suppress just this known, accepted violation. *)
 let span_of_tooltip_area content =
-  !%{|<span class="tooltip-area">%s</span>|} content
+  let disable_comment =
+    if grep "<ul" content || grep "<hr" content || grep "<p>" content then
+      {|<!-- html-validate-disable-block element-permitted-content -->|}
+    else ""
+  in
+  !%{|<span class="tooltip-area">%s%s</span>|} disable_comment content
 
 let tag_with_tooltip tagname name classes tooltip_content display_text =
   let tooltip = span_of_tooltip_area tooltip_content in
@@ -32,7 +43,7 @@ let make env current_module loc id kind =
        | None -> ""
        | Some (Type_lookup.Markdown md) ->
           !%{|<span class="markdown">%s</span>|} (html_escaped md)
-       | Some (PlainText txt) -> html_escaped txt
+       | Some (PlainText txt) -> !%"<p>%s</p>" (html_escaped txt)
        end |> Option.some
     | _ -> None
   in
@@ -44,10 +55,10 @@ let make env current_module loc id kind =
     |> List.map (fun (dmod, _dpath) -> dmod)
     |> list_uniq
     |> List.filter (fun m -> m <> current_module)
-    |> List.map html_escaped
+    |> List.map !%"<li>%s</li>"
     |> function
       | [] -> None
-      | ms -> Some ("Used by\n" ^ String.concat "\n" ms)
+      | ms -> Some ("Used by\n<ul>" ^ String.concat "" ms ^ "</ul>")
   in
   let source_url =
     match env.repository_root_url with
@@ -66,4 +77,4 @@ let make env current_module loc id kind =
   |> List.filter_map Fun.id
   |> function
     | [] -> None
-    | contents -> Some (String.concat "<br><br>" contents)
+    | contents -> Some (String.concat "<hr>" contents)
