@@ -30,6 +30,7 @@ Option                     | Summary
 `-d` _DIR_                 | Output files to directory _DIR_ (default: current directory)
 `-external` _URL_ _COQDIR_ | Set base URL for linking references whose names start with _COQDIR_
 `-no-css`                  | Do not add rocqnavi.css to the output directory
+`-custom-css` _FILE_       | Copy _FILE_ to the output directory and link it after rocqnavi.css";
 `-redirect`                | Generate redirection files
 `-short-names`             | Use short, unqualified module names in the output
 `-title` _TITLE_           | Set the title of the index page
