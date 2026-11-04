@@ -17,6 +17,9 @@ $RocqNavi -title "test-hb" -d ./html $VFiles $GlobFiles \
   -file-references-on-right-pane \
   -doc-source-url "https://github.com/rocq-prover/platform-docs/blob/f9862b19e7d03f6b93194128cfce9a361eefbcfe/src/hierarchy_builder/"
 
+# Validate the generated html files
+npx --yes html-validate@11.17.0 $DIR/html/*.html
+
 # Check html files
 # xq decodes "&nbsp;" entities into the raw NBSP byte sequence (0xc2 0xa0).
 # Whether `diff -w` treats that byte sequence as equivalent to a plain space
