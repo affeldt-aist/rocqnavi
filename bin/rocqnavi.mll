@@ -655,6 +655,7 @@ let title = ref (default_title ())
 let output_dir = ref Filename.current_dir_name
 let logical_name_base = ref ""
 let generate_css = ref true
+let custom_css_file = ref ""
 let use_short_names = ref false
 let generate_redirects = ref false
 let structure_graph_dot_file = ref ""
@@ -689,7 +690,7 @@ let process_v_file ?repo_root proj_name env all_files f =
   let repo_file =
     Option.map (fun root -> root ^ "/" ^ f) repo_root
   in
-  Generate_index.start_html_page !oc title title proj_name all_files;
+  Generate_index.start_html_page ?custom_css_file:env.custom_css_file !oc title title proj_name all_files;
   let lexbuf = Lexing.from_channel ~with_positions:true ic in
   Lexing.set_filename lexbuf filepath;
   coq_bol lexbuf;
@@ -763,6 +764,8 @@ let main () =
       "<url> <coqdir> Set base URL for linking references whose names start with <coqdir>";
     "-no-css", Arg.Clear generate_css,
       "   Do not add rocqnavi.css to the output directory";
+    "-custom-css", Arg.Set_string custom_css_file,
+      "<file>   Copy <file> to the output directory and link it after rocqnavi.css";
     "-redirect", Arg.Set generate_redirects,
       "   Generate redirection files modname.html -> coqdir.modname.html";
     "-short-names", Arg.Set use_short_names,
@@ -802,6 +805,8 @@ let main () =
                          !structure_graph_dot_file));
   if "" <> !index_blacklist_file && not (Sys.file_exists !index_blacklist_file) then
     raise (Usage_error (!%"Error: The file '%s' does not exists, which file was specified by the -index-blacklist option.\n" !index_blacklist_file));
+  if "" <> !custom_css_file && not (Sys.file_exists !custom_css_file) then
+    raise (Usage_error (!%"Error: The file '%s' does not exists, which file was specified by the -custom-css option.\n" !custom_css_file));
   List.iter process_glob_file (List.rev !glob_files);
   let mapping_options =
     Directory_mappings.to_mapping_options !directory_mappings
@@ -817,9 +822,18 @@ let main () =
   write_file Resources.js (Filename.concat !output_dir "rocqnavi.js");
   if !generate_css then
     write_file Resources.css (Filename.concat !output_dir "rocqnavi.css");
+  let custom_css_filename =
+    if !custom_css_file = "" then None
+    else
+      let basename = Filename.basename !custom_css_file in
+      write_file (Common.file_using_r !custom_css_file
+                    (fun ch -> really_input_string ch (in_channel_length ch)))
+        (Filename.concat !output_dir basename);
+      Some basename
+  in
   let file_graph_input = file_graph !file_graph_dot_file !file_graph_depend_file in
   Log.debug (!%"directory_mapping: [%s]" (Directory_mappings.show !directory_mappings));
-  Generate_index.generate ?repo_root !output_dir
+  Generate_index.generate ?repo_root ?custom_css_file:custom_css_filename !output_dir
     !xref_table xref_modules
     !title !directory_mappings
     !structure_graph_dot_file ~hb_graph_style:!structure_graph_style
@@ -830,6 +844,7 @@ let main () =
            usedby_table = if !file_references_on_right_pane then
                             Some (UsedByTable.create_inv_map_from_globs !globs)
                           else None;
+           custom_css_file = custom_css_filename;
          };
   if !show_type_information_using_coqtop_process
      || !show_type_information_using_rocq_lsp_process then

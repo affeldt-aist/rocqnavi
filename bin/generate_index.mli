@@ -17,14 +17,14 @@ val sanitize_linkname : string -> string
 type file_path
 val all_files : (string, unit) Hashtbl.t -> file_path list
 val left_sidebar_files : file_path list -> string
-val start_html_page : out_channel -> string -> string
+val start_html_page : ?custom_css_file:string -> out_channel -> string -> string
                       -> string -> file_path list -> unit
 
 val end_html_page : out_channel -> ?repo_file: string
                     -> UsedByTable.t option -> string -> unit
 val end_index_page : out_channel -> ?repo_file: string -> unit -> unit
 
-val generate : ?repo_root:string -> string -> XrefTable.t
+val generate : ?repo_root:string -> ?custom_css_file:string -> string -> XrefTable.t
                -> (string, unit) Hashtbl.t -> string
                -> Directory_mappings.t
                -> string -> ?hb_graph_style:string -> File_graph.input option
