@@ -73,7 +73,7 @@ let left_sidebar_files all_files =
          sort_for_directories fs
          |> List.map (tag_of_file_path (name :: parents))
        in
-       Html.details ~id:current_path ~summary:[Html.text name] children
+       Html.details ~id:current_path ~summary:[Html.text name] [Html.ul children]
   in
   sort_for_directories all_files
   |> List.map (tag_of_file_path [])
