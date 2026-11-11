@@ -29,9 +29,41 @@ let read_svg svg_path =
   let svg_start = Str.search_forward (Str.regexp_string "<svg") content 0 in
   String.sub content svg_start (String.length content - svg_start)
 
+let write_fullscreen_page svg_path html_path =
+  let svgstring = read_svg svg_path in
+  let title = Filename.basename html_path |> Filename.remove_extension in
+  file_using_w html_path (fun oc ->
+      output_string oc
+        (!%{|<!DOCTYPE html>
+<html lang="">
+<head>
+<meta charset="utf-8">
+<title>%s</title>
+<style>html, body { margin: 0; height: 100%%; } svg { width: 100%%; height: 100%%; display: block; }</style>
+</head>
+<body>
+%s
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+window.addEventListener("load", function () {
+  svgPanZoom(document.querySelector("svg"), {
+    zoomEnabled: true,
+    mouseWheelZoomEnabled: true,
+    controlIconsEnabled: true,
+    fit: true,
+    center: true
+  });
+});
+</script>
+</body>
+</html>
+|} title svgstring))
+
 let div id svg_path =
   let svgstring = read_svg svg_path in
   let class_ = if is_small svgstring then "small-graph" else "graph" in
+  let fullscreen_path = Filename.remove_extension svg_path ^ "_fullscreen.html" in
+  write_fullscreen_page svg_path fullscreen_path;
   !%{|<div id="%s" class="%s">%s</div>
-<p class="svg-direct-link"><a href="%s" target="_blank">View raw SVG</a></p>|}
-    id class_ svgstring (Filename.basename svg_path)
+<p class="svg-direct-link"><a href="%s" target="_blank">View fullscreen</a></p>|}
+    id class_ svgstring (Filename.basename fullscreen_path)
