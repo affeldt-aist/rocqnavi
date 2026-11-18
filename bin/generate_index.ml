@@ -12,6 +12,7 @@
 
 open Common
 open Glob_kind
+module D = XrefTable.Def
 
 type range = Range.t
 
@@ -230,10 +231,10 @@ let overwrite_dot_file_with_url xref_table dot_file = (* dirty *)
     XrefTable.fold (fun (mod_,_) (_, xref) store ->
         match xref with
         | Defs ds ->
-          begin match List.find_opt (fun (path,typ) ->
-              String.ends_with ~suffix:".pack_" path) ds with
-            | Some (path,typ) ->
-              (mod_, path) :: store
+          begin match List.find_opt (fun def ->
+              String.ends_with ~suffix:".pack_" (D.path def)) ds with
+            | Some def ->
+              (mod_, D.path def) :: store
             | None -> store
           end
         | _ -> store)
@@ -353,8 +354,9 @@ let generate ?repo_root ?custom_css_file output_dir (xref_table:XrefTable.t) xre
     XrefTable.fold (fun (module_, pos) xref store ->
         match xref with
         | range, XrefTable.Defs defs ->
-           List.filter_map (function (path, Notation) -> Some (item_of (EntryKind "not") module_ path)
-                                   | _ -> None) defs
+           List.filter (fun def -> D.kind def = Notation) defs
+           |> List.filter (fun def -> D.section def = None)
+           |> List.map (fun def -> item_of (EntryKind "not") module_ (D.path def))
            |> fun items -> items @ store
         | _ -> store
       ) xref_table []
@@ -365,13 +367,14 @@ let generate ?repo_root ?custom_css_file output_dir (xref_table:XrefTable.t) xre
           XrefTable.fold (fun (module_, pos) xref store ->
             match xref with
             | range, XrefTable.Defs defs ->
-               List.filter (fun (path, _) -> is_initial c path) defs
-               |> List.filter (fun (_, typ) -> typ <> Binder)
-               |> List.filter (fun (_, typ) -> typ <> SectionVariableReference)
-               |> List.filter (fun (_, typ) -> typ <> Notation)
-               |> List.filter (fun (path, _) -> not (is_subproof path))
-               |> List.filter (fun (path, _) -> not (is_blacklisted path))
-               |> List.map (fun (path, typ) -> item_of (EntryKind (Glob_kind.to_string typ)) module_ path)
+               List.filter (fun def -> is_initial c (D.path def)) defs
+               |> List.filter (fun def -> D.kind def <> Binder)
+               |> List.filter (fun def -> D.kind def <> SectionVariableReference)
+               |> List.filter (fun def -> D.kind def <> Notation)
+               |> List.filter (fun def -> not (is_subproof (D.path def)))
+               |> List.filter (fun def -> not (is_blacklisted (D.path def)))
+               |> List.map (fun def ->
+                      item_of (EntryKind (Glob_kind.to_string @@ D.kind def)) module_ (D.path def))
                |> fun is -> is @ store
             | range, Ref _ -> store) xref_table []
         in
