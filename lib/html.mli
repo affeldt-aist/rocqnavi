@@ -13,3 +13,5 @@ val to_string : elem -> string
 val details : ?id:string -> summary:elem list -> elem list -> elem
 
 val hr : elem
+
+val span : ?id:string -> ?classes:string list -> elem list -> elem

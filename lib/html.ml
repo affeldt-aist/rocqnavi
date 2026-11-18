@@ -44,3 +44,12 @@ let details ?id ~summary content =
   Tag ("details", attrs, Tag ("summary", [], summary) :: content)
 
 let hr = Tag ("hr", [], [])
+
+let span ?id ?classes content =
+  let id_attr = match id with Some id -> [("id", id)] | None -> [] in
+  let class_attr = match classes with
+    | Some cs when cs <> [] -> [("class", String.concat " " cs)]
+    | _ -> []
+  in
+  Tag ("span", id_attr @ class_attr, content)
+

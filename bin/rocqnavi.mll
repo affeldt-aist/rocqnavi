@@ -24,9 +24,8 @@ let structure_graph_style_default =
   (* https://github.com/affeldt-aist/rocqnavi/issues/154 *)
   {|-Granksep=.4 -Gnodesep=.05 -Gmargin=0 -Gratio="compress" -Nshape=box -Nstyle="rounded,filled" -Nfillcolor="lightgray" -Npenwidth=0 -Nmargin=.04 -Nwidth=0 -Nheight=0|}
 
-let warn lexbuf message =
+let warn position message =
   let open Lexing in
-  let position = lexbuf.lex_curr_p in
   Log.warn
     (!%"File: %s, line %d, culumn %d: %s" position.pos_fname
        position.pos_lnum (position.pos_cnum - position.pos_bol + 1) message)
@@ -205,15 +204,15 @@ let character = function
   | '&' -> output_string !oc "&amp;"
   |  c  -> output_char !oc c
 
-let section_level = function
+let doc_section_level = function
   | "*" -> 1
   | "**" -> 2
   | _ -> 3
 
-let start_section sect =
-  fprintf !oc "<h%d>" (section_level sect)
-let end_section sect =
-  fprintf !oc "</h%d>\n" (section_level sect)
+let start_doc_section sect =
+  fprintf !oc "<h%d>" (doc_section_level sect)
+let end_doc_section sect =
+  fprintf !oc "</h%d>\n" (doc_section_level sect)
 
 let start_doc_right () =
   fprintf !oc "<span class=\"docright\">(* "
@@ -369,6 +368,23 @@ let end_proof spaces kwd =
   fprintf !oc "%s%s</div></details>\n" spaces kwd;
   in_proof := false
 
+type block = Section of string | Module of string
+let block_name = function Section name | Module name -> name
+let current_blocks = ref [] (* Section and Module blocks *)
+
+let start_block oc block =
+  current_blocks := block :: !current_blocks;
+  let block_type = match block with Section _ -> "section" | _ -> "module" in
+  fprintf oc "<div class=\"block %s\">\n" block_type
+let end_block position oc name =
+  match !current_blocks with
+  | block :: rest when block_name block = name ->
+     fprintf oc "</div>";
+     current_blocks := rest
+  | _ ->
+     warn position (!%"Unexpected `End %s.` : The current blocks are [%s]"
+             name (String.concat "; " @@ List.map block_name !current_blocks))
+
 (* Like Str.global_replace but don't interpret '\1' etc in replacement text *)
 let global_replace re subst txt =
   Str.global_substitute re (fun _ -> subst) txt
@@ -403,9 +419,9 @@ rule coq_bol = parse
         end_doc();
         skip_newline lexbuf }
   | space* "(** " ("*"+ as sect)
-      { start_section sect;
+      { start_doc_section sect;
         doc lexbuf;
-        end_section sect;
+        end_doc_section sect;
         skip_newline lexbuf }
   | space* "(** "
       { start_doc();
@@ -442,9 +458,7 @@ rule coq_bol = parse
   | eof
       { () }
   | space* as s
-      { space s;
-        proceed_current_command (Lexing.lexeme lexbuf);
-        coq lexbuf }
+      { space s; coq lexbuf }
 
 and skip_newline = parse
   | space* "\n"
@@ -468,6 +482,30 @@ and coq = parse
         coq lexbuf }
 (*  | path as id
       { ident (Lexing.lexeme_start lexbuf) id; coq lexbuf }*)
+  | space* "Section" space+ (ident as name) space* "."
+      {
+        let cmd = Lexing.lexeme lexbuf in
+        end_current_command !env cmd;
+        start_block !oc (Section name);
+        idents !env (Lexing.lexeme_start lexbuf) cmd (Lexing.lexeme_start_p lexbuf);
+        coq lexbuf
+      }
+  | space* "Module" space+ (("Export"|"Import") space+)? (ident as name) space* "."
+      {
+        let cmd = Lexing.lexeme lexbuf in
+        end_current_command !env cmd;
+        start_block !oc (Module name);
+        idents !env (Lexing.lexeme_start lexbuf) cmd (Lexing.lexeme_start_p lexbuf);
+        coq lexbuf
+      }
+  | space* "End" space+ (ident as name) space* "."
+      {
+        let cmd = Lexing.lexeme lexbuf in
+        end_current_command !env cmd;
+        idents !env (Lexing.lexeme_start lexbuf) cmd (Lexing.lexeme_start_p lexbuf);
+        end_block lexbuf.lex_curr_p !oc name;
+        skip_newline lexbuf
+      }
   | '.' '\n'
       {
         end_current_command !env (Lexing.lexeme lexbuf);
@@ -533,7 +571,7 @@ and string = parse
 
 and bracket level = parse
   | "*)"
-      { warn lexbuf "Warning: unterminated `]`"; end_bracket() }
+      { warn lexbuf.lex_curr_p "Unterminated `]`"; end_bracket() }
   | "\\[" { character '['; bracket level lexbuf }
   | "\\]" { character ']'; bracket level lexbuf }
   | ']'
@@ -686,6 +724,7 @@ let process_v_file ?repo_root proj_name env all_files f =
   let ic = open_in f in
   oc := open_out (Filename.concat !output_dir (module_name ^ ".html"));
   enum_depth := 0; in_proof := false;
+  current_blocks := [];
   Log.debug (!%"process_v_file: %s" f);
   let repo_file =
     Option.map (fun root -> root ^ "/" ^ f) repo_root
