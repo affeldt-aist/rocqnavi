@@ -18,6 +18,7 @@ open Common
 open Generate_index
 open Env
 module K = Glob_kind
+module Def = XrefTable.Def
 
 let structure_graph_style_default =
   (* https://github.com/affeldt-aist/rocqnavi/issues/154 *)
@@ -65,22 +66,15 @@ let xref_table = ref XrefTable.empty
 (* Records all module names for which a .glob file is given *)
 let xref_modules : (string, unit) Hashtbl.t = Hashtbl.create 29
 
-let path sp id =
-  match sp, id with
-  | "<>", "<>" -> ""
-  | "<>", _    -> id
-  | _   , "<>" -> sp
-  | _   , _    -> sp ^ "." ^ id
-
 let add_module m =
   Hashtbl.add xref_modules m ()
 
 let add_reference curmod pos_from pos_to dp sp id ty =
-  let tbl = XrefTable.add_reference !xref_table curmod pos_from pos_to dp (path sp id) ty in
+  let tbl = XrefTable.add_reference !xref_table curmod pos_from pos_to dp sp id ty in
   xref_table := tbl
 
 let add_definition curmod pos_from pos_to sp id ty =
-  let tbl = XrefTable.add_definition !xref_table curmod pos_from pos_to (path sp id) ty in
+  let tbl = XrefTable.add_definition !xref_table curmod pos_from pos_to sp id ty in
   xref_table := tbl
 
 (* Map module names to URLs *)
@@ -139,11 +133,14 @@ let find_pos xref_table (m, pos) = XrefTable.find xref_table m pos
 
 let crossref m pos max_pos =
   match find_pos !xref_table (m, pos) with
-  | Some (_range, Defs [(path, Notation)]) ->
+  | Some (_range, Defs [def]) when Def.kind def = Notation ->
+    let path = XrefTable.Def.path def in
     let pos' = pos + String.length path in
     Anchors (pos', [(sanitize_linkname path, Notation)])
   | Some (range, Defs defs) ->
-    Anchors (snd range + 1, List.map (fun (path, kind) -> (sanitize_linkname path, kind)) defs)
+    Anchors (snd range + 1,
+             List.map (fun def ->
+                 (sanitize_linkname (Def.path def), Def.kind def)) defs)
   | Some (range, Ref(m', p, _)) ->
       let url = url_for_module m' in
       if p = "" then
