@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>html vs expected_html diff viewer</title>
+<style>
+  html, body { margin: 0; height: 100%; font-family: sans-serif; }
+  #bar { padding: 6px 10px; background: #222; color: #fff; display: flex; gap: 12px; align-items: center; }
+  #bar select { font-size: 14px; }
+  #panes { display: flex; height: calc(100% - 38px); }
+  .pane { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .pane + .pane { border-left: 2px solid #888; }
+  .pane h3 { margin: 0; padding: 4px 8px; background: #eee; font-size: 13px; }
+  iframe { flex: 1; border: none; width: 100%; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <label>file: <select id="file"></select></label>
+</div>
+<div id="panes">
+  <div class="pane"><h3>html/ (actual)</h3><iframe id="left"></iframe></div>
+  <div class="pane"><h3>expected_html/ (expected)</h3><iframe id="right"></iframe></div>
+</div>
+<script>
+// file:// で直接開くため、サーバもfetchも使わずファイル一覧は固定で持つ
+const files = [
+  "tutorial_basics.html",
+  "index.html",
+  "index_abbrev_A.html", "index_abbrev_B.html", "index_abbrev_C.html", "index_abbrev_D.html",
+  "index_abbrev_H.html", "index_abbrev_I.html", "index_abbrev_M.html", "index_abbrev_N.html",
+  "index_abbrev_O.html", "index_abbrev_P.html", "index_abbrev_S.html", "index_abbrev_T.html",
+  "index_abbrev_U.html",
+  "index_def_A.html", "index_def_B.html", "index_def_C.html", "index_def_D.html",
+  "index_def_H.html", "index_def_I.html", "index_def_M.html", "index_def_N.html",
+  "index_def_O.html", "index_def_P.html", "index_def_S.html", "index_def_T.html",
+  "index_def_U.html",
+  "index_file_A.html", "index_file_B.html", "index_file_C.html", "index_file_D.html",
+  "index_file_H.html", "index_file_I.html", "index_file_M.html", "index_file_N.html",
+  "index_file_O.html", "index_file_P.html", "index_file_S.html", "index_file_T.html",
+  "index_file_U.html",
+  "index_global_A.html", "index_global_B.html", "index_global_C.html", "index_global_D.html",
+  "index_global_H.html", "index_global_I.html", "index_global_M.html", "index_global_N.html",
+  "index_global_O.html", "index_global_P.html", "index_global_S.html", "index_global_T.html",
+  "index_global_U.html",
+  "index_notations.html",
+  "index_prf_A.html", "index_prf_B.html", "index_prf_C.html", "index_prf_D.html",
+  "index_prf_H.html", "index_prf_I.html", "index_prf_M.html", "index_prf_N.html",
+  "index_prf_O.html", "index_prf_P.html", "index_prf_S.html", "index_prf_T.html",
+  "index_prf_U.html"
+];
+
+const sel = document.getElementById('file');
+const left = document.getElementById('left');
+const right = document.getElementById('right');
+
+files.forEach(f => {
+  const o = document.createElement('option');
+  o.value = f;
+  o.textContent = f;
+  sel.appendChild(o);
+});
+
+function load(f) {
+  left.src = 'html/' + f;
+  right.src = 'expected_html/' + f;
+}
+
+sel.addEventListener('change', () => load(sel.value));
+load(files[0]);
+</script>
+</body>
+</html>
