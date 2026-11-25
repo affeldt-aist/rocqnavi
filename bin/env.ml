@@ -5,6 +5,8 @@ type t = {
     directory_mappings: Directory_mappings.t;
     usedby_table: UsedByTable.t option;
     custom_css_file: string option;
+    xref_modules: (string, unit) Hashtbl.t;
+    xref_table: XrefTable.t;
   }
 let default = {
     type_lookup = None;
@@ -13,4 +15,6 @@ let default = {
     directory_mappings = Directory_mappings.empty;
     usedby_table = None;
     custom_css_file = None;
+    xref_modules = Hashtbl.create 100;
+    xref_table = XrefTable.empty;
 }

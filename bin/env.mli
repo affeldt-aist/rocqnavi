@@ -5,6 +5,8 @@ type t = {
     directory_mappings: Directory_mappings.t;
     usedby_table: UsedByTable.t option;
     custom_css_file: string option;
+    xref_modules: (string, unit) Hashtbl.t;
+    xref_table: XrefTable.t;
   }
 
 val default : t

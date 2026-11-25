@@ -28,7 +28,7 @@ let notation_of_item (module_, linkname, item_name) =
 
 (**
 *)
-let html_of_notation scope notation module_ linkname =
+let html_of_notation (scope, notation, module_, linkname) =
   let scope =
     match scope with
     | NoScope -> {|<span class="warning">no scope</span>|}
@@ -82,13 +82,14 @@ let html_of_notation scope notation module_ linkname =
 let generate_body table items =
   let grouped =
     List.map notation_of_item items
+    |> list_uniq
     |> Common.list_group_by (fun (scope, _, _, _) -> scope)
     |> List.sort (fun (s1, _) (s2, _) -> compare_scope s1 s2)
     |> List.map (fun (scope, nots) -> scope, Common.list_sort_by (fun (_, not, _, _) -> not) nots)
   in
   let html_of_group (scope, notations) =
     let h2 = !%"<h2>%s</h2>" (show_scope scope) in
-    let tags = List.map (fun (scope, not, m, item) -> html_of_notation scope not m item) notations in
+    let tags = List.map html_of_notation notations in
     h2 ^ String.concat "<br>\n" tags
   in
   table ^ (String.concat "" @@ List.map html_of_group grouped)
