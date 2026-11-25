@@ -5,6 +5,7 @@
   <div class="resizer resizer-right"></div>
 
   <div class="sidebar-right">
+    <div><a href="index.html">Index</a></div>
     <div>$LINK_TO_SOURCE</div>
     <div>$USES_PANEL</div>
   </div>

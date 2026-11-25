@@ -58,6 +58,16 @@ div.sidebar ul {
     padding-inline-start: 10px;
 }
 
+div.sidebar-right {
+    padding: 1em;
+}
+div.sidebar-right > * + * {
+    margin-top: 1em;
+}
+div.sidebar-right details + details {
+    margin-top: 0.75em;
+}
+
 div.content {
   padding-left:0.5em;
   max-width: 100%;
@@ -137,6 +147,18 @@ a:link {color : #0000BF; text-decoration : none; }
 a:hover {text-decoration : none; }
 a:active {text-decoration : none; }
 
+a[target="_blank"]::after {
+  content: "";
+  display: inline-block;
+  width: 0.75em;
+  height: 0.75em;
+  margin-left: 0.25em;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14z'/%3E%3Cpath d='M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2z'/%3E%3C/svg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14z'/%3E%3Cpath d='M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2z'/%3E%3C/svg%3E") no-repeat center / contain;
+  vertical-align: middle;
+}
+
 .coq :target {
   background-color: yellow;
   transition: background-color 0.5s;
@@ -191,6 +213,10 @@ div.md th {
 
 img.img-darkmode-enable {
     isolation: auto;
+}
+
+.darkmode--activated a[target="_blank"]::after {
+    background-color: white;
 }
 
 .darkmode--activated span.katex {

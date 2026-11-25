@@ -123,7 +123,7 @@ let uses_panel module_name usedby_table =
 let end_page_footer ?repo_file uses_panel_html ch =
   let open Str in
   let link_to_source_tag =
-    Option.map (!%{|<a href="%s">Source</a>|}) repo_file
+    Option.map (!%{|<a href="%s" target="_blank" rel="noopener noreferrer">Source</a>|}) repo_file
     |> Option.value ~default:""
   in
   global_replace (regexp_string "$LINK_TO_SOURCE") link_to_source_tag Resources.footer
