@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>html vs expected_html diff viewer</title>
+<style>
+  html, body { margin: 0; height: 100%; font-family: sans-serif; }
+  #bar { padding: 6px 10px; background: #222; color: #fff; display: flex; gap: 12px; align-items: center; }
+  #bar select { font-size: 14px; }
+  #panes { display: flex; height: calc(100% - 38px); }
+  .pane { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .pane + .pane { border-left: 2px solid #888; }
+  .pane h3 { margin: 0; padding: 4px 8px; background: #eee; font-size: 13px; }
+  iframe { flex: 1; border: none; width: 100%; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <label>file: <select id="file"></select></label>
+</div>
+<div id="panes">
+  <div class="pane"><h3>html/ (actual)</h3><iframe id="left"></iframe></div>
+  <div class="pane"><h3>expected_html/ (expected)</h3><iframe id="right"></iframe></div>
+</div>
+<script>
+// file:// で直接開くため、サーバもfetchも使わずファイル一覧は固定で持つ
+const files = [
+  "Main.html",
+  "index.html",
+  "index_abbrev_B.html", "index_abbrev_H.html", "index_abbrev_L.html",
+  "index_abbrev_M.html", "index_abbrev_R.html", "index_abbrev_X.html", "index_abbrev_Y.html",
+  "index_def_B.html", "index_def_H.html", "index_def_L.html",
+  "index_def_M.html", "index_def_R.html", "index_def_X.html", "index_def_Y.html",
+  "index_file_B.html", "index_file_H.html", "index_file_L.html",
+  "index_file_M.html", "index_file_R.html", "index_file_X.html", "index_file_Y.html",
+  "index_global_B.html", "index_global_H.html", "index_global_L.html",
+  "index_global_M.html", "index_global_R.html", "index_global_X.html", "index_global_Y.html",
+  "index_notations.html",
+  "index_prf_B.html", "index_prf_H.html", "index_prf_L.html",
+  "index_prf_M.html", "index_prf_R.html", "index_prf_X.html", "index_prf_Y.html"
+];
+
+const sel = document.getElementById('file');
+const left = document.getElementById('left');
+const right = document.getElementById('right');
+
+files.forEach(f => {
+  const o = document.createElement('option');
+  o.value = f;
+  o.textContent = f;
+  sel.appendChild(o);
+});
+
+function load(f) {
+  left.src = 'html/' + f;
+  right.src = 'expected_html/' + f;
+}
+
+sel.addEventListener('change', () => load(sel.value));
+load(files[0]);
+</script>
+</body>
+</html>
