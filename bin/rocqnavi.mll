@@ -58,24 +58,13 @@ let end_current_command env s =
   end;
   current_command := ""
 
-(* Record cross-references found in .glob files *)
+let add_module tbl m = Hashtbl.add tbl m (); tbl
 
-(* (name of module, character position in file) -> cross-reference *)
-let xref_table = ref XrefTable.empty
+let add_reference xref_table curmod pos_from pos_to dp sp id ty =
+  XrefTable.add_reference xref_table curmod pos_from pos_to dp sp id ty
 
-(* Records all module names for which a .glob file is given *)
-let xref_modules : (string, unit) Hashtbl.t = Hashtbl.create 29
-
-let add_module m =
-  Hashtbl.add xref_modules m ()
-
-let add_reference curmod pos_from pos_to dp sp id ty =
-  let tbl = XrefTable.add_reference !xref_table curmod pos_from pos_to dp sp id ty in
-  xref_table := tbl
-
-let add_definition curmod pos_from pos_to sp id ty =
-  let tbl = XrefTable.add_definition !xref_table curmod pos_from pos_to sp id ty in
-  xref_table := tbl
+let add_definition xref_table curmod pos_from pos_to sp id ty =
+  XrefTable.add_definition xref_table curmod pos_from pos_to sp id ty
 
 (* Map module names to URLs *)
 
@@ -105,7 +94,7 @@ let ends_with s x =
 let url_concat url suff =
   (if ends_with url "/" then url else url ^ "/") ^ suff
 
-let url_for_module m =
+let url_for_module xref_modules m =
   let rec url_for = function
   | [] ->
       if Hashtbl.mem xref_modules m then m ^ ".html" else ("NOTFOUND the module url for "^m)
@@ -131,8 +120,8 @@ let re_sane_path = Str.regexp "[A-Za-z0-9_.\x80-\xFF]+$"
 
 let find_pos xref_table (m, pos) = XrefTable.find xref_table m pos
 
-let crossref m pos max_pos =
-  match find_pos !xref_table (m, pos) with
+let crossref env m pos max_pos =
+  match find_pos env.xref_table (m, pos) with
   | Some (_range, Defs [def]) when Def.kind def = Notation ->
     let path = XrefTable.Def.path def in
     let pos' = pos + String.length path in
@@ -142,7 +131,7 @@ let crossref m pos max_pos =
              List.map (fun def ->
                  (sanitize_linkname (Def.path def), Def.kind def)) defs)
   | Some (range, Ref(m', p, _)) ->
-      let url = url_for_module m' in
+      let url = url_for_module env.xref_modules m' in
       if p = "" then
         Link (snd range + 1, url)
       else
@@ -150,7 +139,7 @@ let crossref m pos max_pos =
   | None ->
     let rec search_next pos =
       if pos > max_pos then None
-      else if find_pos !xref_table (m, pos) = None then
+      else if find_pos env.xref_table (m, pos) = None then
         search_next (pos + 1)
       else Some pos
     in
@@ -283,7 +272,7 @@ let ident_partial ?classes env pos id loc =
                  else ["id"])
       |> String.concat " "
     in
-    begin match crossref !current_module pos max_pos with
+    begin match crossref env !current_module pos max_pos with
     | Nolink None ->
        pos, !%"<span class=\"%s\">%s</span>" classes (html_escaped id)
     | Nolink (Some pos') ->
@@ -705,18 +694,24 @@ let process_v_file ?repo_root proj_name env all_files f =
 
 let globs = ref []
 
-let process_glob_file f =
+let process_glob_file (modules, xref_table) f =
   let ic = open_in f in
   let glob = Glob_parser.parse_channel ic in
   close_in ic;
   globs := glob :: !globs;
-  add_module glob.file_module;
-  List.iter (function
-    | Glob.Definition { pos_from; pos_to; section_path; id; kind } ->
-       add_definition glob.file_module pos_from pos_to section_path id kind
-    | Glob.Reference { pos_from; pos_to; logical_path; section_path; id; kind } ->
-       add_reference glob.file_module pos_from pos_to logical_path section_path id kind)
-    glob.entries
+  let modules = add_module modules glob.file_module in
+  let xref_table =
+    List.fold_left (fun tbl -> function
+        | Glob.Definition { pos_from; pos_to; section_path; id; kind } ->
+           add_definition tbl glob.file_module pos_from pos_to section_path id
+             kind
+        | Glob.Reference { pos_from; pos_to; logical_path; section_path; id;
+                           kind } ->
+           add_reference tbl glob.file_module pos_from pos_to logical_path
+             section_path id kind)
+      xref_table glob.entries
+  in
+  (modules, xref_table)
 
 let write_file txt filename =
   let oc = open_out filename in
@@ -807,7 +802,10 @@ let main () =
     raise (Usage_error (!%"Error: The file '%s' does not exists, which file was specified by the -index-blacklist option.\n" !index_blacklist_file));
   if "" <> !custom_css_file && not (Sys.file_exists !custom_css_file) then
     raise (Usage_error (!%"Error: The file '%s' does not exists, which file was specified by the -custom-css option.\n" !custom_css_file));
-  List.iter process_glob_file (List.rev !glob_files);
+  let (xref_modules, xref_table) =
+    List.fold_left process_glob_file (Hashtbl.create 100, XrefTable.empty)
+    (List.rev !glob_files)
+  in
   let mapping_options =
     Directory_mappings.to_mapping_options !directory_mappings
   in
@@ -834,7 +832,7 @@ let main () =
   let file_graph_input = file_graph !file_graph_dot_file !file_graph_depend_file in
   Log.debug (!%"directory_mapping: [%s]" (Directory_mappings.show !directory_mappings));
   Generate_index.generate ?repo_root ?custom_css_file:custom_css_filename !output_dir
-    !xref_table xref_modules
+    xref_table xref_modules
     !title !directory_mappings
     !structure_graph_dot_file ~hb_graph_style:!structure_graph_style
     file_graph_input index_blacklist_opt;
@@ -845,6 +843,8 @@ let main () =
                             Some (UsedByTable.create_inv_map_from_globs !globs)
                           else None;
            custom_css_file = custom_css_filename;
+           definition_blacklist = index_blacklist_opt;
+           xref_modules; xref_table;
          };
   if !show_type_information_using_coqtop_process
      || !show_type_information_using_rocq_lsp_process then
